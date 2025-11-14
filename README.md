@@ -1,10 +1,16 @@
 # ReazonSpeech + DeepSeek 一键字幕流水线
 
 本仓库基于 ReazonSpeech 的 ESPnet 模型完成语音识别，并使用 DeepSeek (OpenAI 兼容接口) 进行翻译，再通过 ffmpeg 生成中日双语字幕视频。
+## 效果图
+- 日语识别
+![alt text](test/日语识别.png)
+- 日语翻译
+![alt text](test/日语翻译.png)
 
 ## 目录
 
 - [ReazonSpeech + DeepSeek 一键字幕流水线](#reazonspeech--deepseek-一键字幕流水线)
+  - [效果图](#效果图)
   - [目录](#目录)
   - [环境准备](#环境准备)
   - [单次 ASR：`asr.py`](#单次-asrasrpy)
