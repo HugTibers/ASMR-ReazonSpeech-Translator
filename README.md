@@ -27,7 +27,9 @@
 ```bash
 # 1. 获取 ReazonSpeech 代码与依赖
 git clone https://github.com/reazon-research/ReazonSpeech
-pip install "ReazonSpeech/pkg/nemo-asr"
+pip install "ReazonSpeech/pkg/espnet-asr"
+
+// nemo-asr对配置要求较高
 
 # 2. 安装本项目所需依赖
 pip install huggingface-hub openai soundfile numpy==1.26.4
@@ -93,6 +95,9 @@ python pipeline.py test/Track1_あの子の彼氏は俺じゃなかった.wav \
 | `--max-chars` | 单次翻译请求的最大字符数 (默认 4000) |
 | `--bg-color` / `--resolution` | ffmpeg 生成字幕视频的背景色和分辨率 |
 | `--no-resume` | 关闭断点续跑，强制从头执行 |
+| `--model-source` | 指定 ReazonSpeech 模型来源，可填本地目录、压缩包或镜像 URL；也可通过环境变量 `REAZONSPEECH_MODEL_SOURCE` 设置 |
+
+> **没有梯子的环境**：先在服务器上运行 `git clone https://huggingface.co/reazon-research/reazonspeech-espnet-v2` 把模型仓库下到本地，再在命令中追加 `--model-source ./reazonspeech-espnet-v2`（或设置 `REAZONSPEECH_MODEL_SOURCE=./reazonspeech-espnet-v2`），即可离线使用。
 
 执行过程中会生成如下文件：
 
@@ -143,7 +148,7 @@ python srt.py \
 
 ## 常见问题
 
-1. **无法下载模型**：请确保网络可访问 Hugging Face；必要时配置代理或手动下载后放入 `reazonspeech-espnet-v2/`。
+1. **无法下载模型**：可直接在服务器上执行 `git clone https://huggingface.co/reazon-research/reazonspeech-espnet-v2`（或 `wget --content-disposition https://huggingface.co/.../resolve/main/reazonspeech-espnet-v2.tar.gz`）下载完整项目，再通过 `pipeline.py --model-source ./reazonspeech-espnet-v2` 使用，无需翻墙或修改依赖。
 2. **DeepSeek 鉴权失败**：检查 `DEEPSEEK_API_KEY` / `OPENAI_API_KEY` 是否有效；私有部署可通过 `--base-url` 指定网关。
 3. **无 GPU 环境**：所有脚本都可通过 `--device cpu` 运行，只是速度会慢；若使用 batch 处理，建议配合 `--max-retries`。
 4. **ffmpeg 报错**：请确认已安装 ffmpeg 5.x+ 且路径无中文或空格；字幕路径中若包含特殊字符已自动转义。
