@@ -18,7 +18,6 @@ try:
 except ImportError:  # pragma: no cover
     OpenAI = None  # type: ignore
 
-
 TIMED_LINE = re.compile(r"\[(?P<start>[\d.]+)s -> (?P<end>[\d.]+)s\] (?P<text>.*)")
 STAGES: Tuple[str, ...] = ("asr", "translate", "srt", "video")
 PROGRESS_SUFFIX = "_pipeline_state.json"
@@ -26,7 +25,6 @@ DEFAULT_PROMPT = (
     "你是一个专业的轻小说翻译家，擅长将日文轻小说内容自然、流畅地翻译成中文。"
     "忠实还原原文语气、情感和细节，避免直译，确保输出仍保留原文的分行与时间标记。"
 )
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -349,7 +347,7 @@ def main() -> None:
             progress_path.unlink()
 
     client = None
-    prompt = resolve_prompt(args.prompt, args.prompt_file)
+    prompt = DEFAULT_PROMPT
     for idx, stage in enumerate(STAGES):
         if idx < start_idx:
             continue
