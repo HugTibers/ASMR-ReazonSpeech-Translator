@@ -1,6 +1,10 @@
 # ReazonSpeech + DeepSeek 一键字幕流水线
 
 本仓库基于 ReazonSpeech 的 ESPnet 模型完成语音识别，并使用 DeepSeek (OpenAI 兼容接口) 进行翻译，再通过 ffmpeg 生成中日双语字幕视频。
+
+> **环境建议**
+> - 推荐在 Linux / WSL2 中使用，按照下文命令即可直接 `pip install "ReazonSpeech/pkg/espnet-asr"`。
+> - 如果必须在原生 Windows 下运行，需要先安装 Visual Studio Build Tools（Desktop development with C++）、CMake、Ninja 等 C++ 工具链，否则 `sentencepiece==0.2.0` 无法编译。
 ## 效果图
 - 日语识别
 ![alt text](test/日语识别.png)
