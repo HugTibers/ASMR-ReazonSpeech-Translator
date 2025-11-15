@@ -15,9 +15,9 @@
   - [环境准备](#环境准备)
   - [单次 ASR：`asr.py`](#单次-asrasrpy)
   - [仅翻译文本：`translate.py`](#仅翻译文本translatepy)
+  - [单独生成 SRT：`srt.py`](#单独生成-srtsrtpy)
   - [完整流水线：`pipeline.py`](#完整流水线pipelinepy)
   - [批量处理文件夹：`batch_pipeline.py`](#批量处理文件夹batch_pipelinepy)
-  - [单独生成 SRT：`srt.py`](#单独生成-srtsrtpy)
   - [常见问题](#常见问题)
 
 ---
@@ -49,9 +49,7 @@ Windows: 访问 ffmpeg官网 或 Gyan.dev下载页，下载 Windows 版本压缩
 `asr.py` 是最小可复用的命令行工具，用于把单个音频转写为带时间戳的 TXT。
 
 ```bash
-python asr.py test/Track1.wav \
-  --device cuda \
-  --output test/Track1_reazon.txt
+python asr.py test/Track1.wav
 ```
 
 - 默认输出为 `音频名_reazon.txt`。
@@ -66,14 +64,22 @@ python asr.py test/Track1.wav \
 ```bash
 export DEEPSEEK_API_KEY=sk-xxx  # 或 OPENAI_API_KEY
 
-python translate.py test/Track1_reazon.txt \
-  --output test/Track1_reazon翻译.txt \
-  --max-chars 3500 \
-  --prompt "保持时间戳并自然翻译成中文"
+python translate.py test/Track1_reazon.txt --api-key sk-xxx
+  
+```
+---
+
+## 单独生成 SRT：`srt.py`
+
+如果只想把现有的中/日 TXT 合并成字幕：
+
+```bash
+python srt.py \
+  test/Track1_reazon.txt \
+  test/Track1_reazon翻译.txt
 ```
 
-- `--api-key` / `--base-url` 可覆盖默认配置。
-- `--max-chars` 控制分块大小，避免超长上下文导致请求失败。
+当行数不匹配时脚本会给出警告，多余的句子会仅显示日文。
 
 ---
 
@@ -83,7 +89,6 @@ python translate.py test/Track1_reazon.txt \
 
 ```bash
 python pipeline.py test/Track1.wav \
-  --device cuda \
   --api-key $DEEPSEEK_API_KEY
 ```
 
@@ -122,26 +127,12 @@ python batch_pipeline.py test \
 示例：
 
 ```bash
-python batch_pipeline.py "test" --pipeline-args --api-key sk-qweqweqwe123123131
+python batch_pipeline.py "test" --pipeline-args --api-key sk-qweqweqwe123123131 (使用你自己的deepseek秘钥)
 ```
 
 - 默认会跳过已存在 `*_subbed.mp4` 的文件。
 - `--pipeline-script` 可指向自定义的 pipeline 路径。
 - 通过 `--pipeline-args` 把其他参数透传给 `pipeline.py`。
-
----
-
-## 单独生成 SRT：`srt.py`
-
-如果只想把现有的中/日 TXT 合并成字幕：
-
-```bash
-python srt.py \
-  test/Track1_reazon.txt \
-  test/Track1_reazon翻译.txt
-```
-
-当行数不匹配时脚本会给出警告，多余的句子会仅显示日文。
 
 ---
 

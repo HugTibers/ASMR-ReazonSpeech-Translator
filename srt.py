@@ -1,69 +1,84 @@
-"""Minimal CLI for running a single ReazonSpeech ASR job."""
-
 from __future__ import annotations
 
 import argparse
-import os
+import re
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, List, Tuple
 
-from reazonspeech.espnet.asr import audio_from_path, load_model, transcribe
+
+TIMED_LINE = re.compile(r"\[(?P<start>[\d.]+)s -> (?P<end>[\d.]+)s\] (?P<text>.*)")
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Transcribe audio with ReazonSpeech")
-    parser.add_argument("audio", help="待转写的音频路径")
-    parser.add_argument(
-        "--device",
-        default="cuda",
-        help="载入模型所用的设备，例如 cuda / cpu",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="结果保存路径，不指定则与音频同名 (_reazon.txt)",
-    )
+    parser = argparse.ArgumentParser(description="将 ReazonSpeech 文本组合成 SRT")
+    parser.add_argument("jp", help="原始转写 txt 路径")
+    parser.add_argument("cn", help="翻译 txt 路径")
     return parser.parse_args()
 
 
-def run_asr(audio_file: Path, device: str) -> Iterable[Tuple[float, float, str]]:
-    model = load_model(device)
-    audio = audio_from_path(str(audio_file))
-    result = transcribe(model, audio)
-    for segment in result.segments:
-        start = float(getattr(segment, "start_seconds", 0.0))
-        end = float(getattr(segment, "end_seconds", 0.0))
-        text = getattr(segment, "text", str(segment))
-        yield start, end, text
+def format_time(seconds: float) -> str:
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    s = int(seconds % 60)
+    ms = int(round((seconds - int(seconds)) * 1000))
+    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 
-def save_segments(segments: Iterable[Tuple[float, float, str]], output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as fout:
-        for start, end, text in segments:
-            line = f"[{start:.2f}s -> {end:.2f}s] {text}"
-            print("  -", line)
-            fout.write(line + "\n")
+def parse_lines(path: Path, allow_plain: bool = False) -> List[Tuple[float, float, str]]:
+    entries: List[Tuple[float, float, str]] = []
+    with path.open("r", encoding="utf-8") as fin:
+        for line in fin:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            match = TIMED_LINE.match(stripped)
+            if match:
+                entries.append(
+                    (
+                        float(match.group("start")),
+                        float(match.group("end")),
+                        match.group("text"),
+                    )
+                )
+            elif allow_plain:
+                entries.append((0.0, 0.0, stripped))
+    return entries
+
+
+def write_srt(
+    jp_entries: Iterable[Tuple[float, float, str]],
+    cn_entries: List[Tuple[float, float, str]],
+    srt_path: Path,
+) -> None:
+    srt_path.parent.mkdir(parents=True, exist_ok=True)
+    with srt_path.open("w", encoding="utf-8") as fout:
+        for idx, entry in enumerate(jp_entries, 1):
+            start, end, text = entry
+            cn_text = cn_entries[idx - 1][2] if idx - 1 < len(cn_entries) else ""
+            subtitle_text = text if not cn_text else f"{text}\n{cn_text}"
+            fout.write(
+                f"{idx}\n{format_time(start)} --> {format_time(end)}\n{subtitle_text}\n\n"
+            )
 
 
 def main() -> None:
     args = parse_args()
-    audio_path = Path(args.audio).expanduser().resolve()
-    if not audio_path.exists():
-        raise FileNotFoundError(f"音频文件不存在：{audio_path}")
+    jp_path = Path(args.jp).expanduser().resolve()
+    cn_path = Path(args.cn).expanduser().resolve()
+    # 输出路径：test/，文件名与原文一致但扩展名为.srt
+    srt_dir = Path("test")
+    srt_dir.mkdir(parents=True, exist_ok=True)
+    srt_path = srt_dir / (jp_path.stem + ".srt")
 
-    output_path = (
-        args.output
-        if args.output is not None
-        else Path(os.path.splitext(str(audio_path))[0] + "_reazon.txt")
-    )
+    original_entries = parse_lines(jp_path)
+    cn_entries = parse_lines(cn_path, allow_plain=True)
 
-    segments = list(run_asr(audio_path, args.device))
-    save_segments(segments, output_path)
-    print(f"分段结果已保存到: {output_path}")
+    if len(cn_entries) != len(original_entries):
+        print("警告：中日行数不匹配，缺失的翻译将留空。")
+
+    write_srt(original_entries, cn_entries, srt_path)
+    print(f"SRT 字幕已生成：{srt_path}")
 
 
 if __name__ == "__main__":
     main()
-    
