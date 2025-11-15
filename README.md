@@ -26,15 +26,17 @@
 ## 环境准备
 
 ```bash
-# 1. 获取 ReazonSpeech 代码与依赖
+# 1. 下载项目
+git clone https://github.com/HugTibers/ASMR-ReazonSpeech-Translator.git
+# 2. 获取 ReazonSpeech 代码与依赖
 pip install "ReazonSpeech/pkg/espnet-asr"
 
 // nemo-asr对配置要求较高
 
-# 2. 安装本项目所需依赖
+# 3. 安装本项目所需依赖
 pip install huggingface-hub openai soundfile numpy==1.26.4
 
-# 3. 确保本机已安装 ffmpeg，并且在 PATH 中, 不需要合成视频就不用下载
+# 4. 确保本机已安装 ffmpeg，并且在 PATH 中, 不需要合成视频就不用下载
 ffmpeg -version
 
 Ubuntu: sudo yum install ffmpeg
