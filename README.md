@@ -19,6 +19,7 @@
   - [完整流水线：`pipeline.py`](#完整流水线pipelinepy)
   - [批量处理文件夹：`batch_pipeline.py`](#批量处理文件夹batch_pipelinepy)
   - [常见问题](#常见问题)
+  - [语音识别](#语音识别)
 
 ---
 
@@ -141,3 +142,7 @@ python batch_pipeline.py "test" --pipeline-args --api-key sk-qweqweqwe123123131 
 1. **无法下载模型**：请确保服务器能够访问 Hugging Face（必要时配置代理或镜像），脚本会在运行时自动拉取官方模型。
 2. **无 GPU 环境**：所有脚本都可通过 `--device cpu` 运行，只是速度会慢。
 3. **ffmpeg 报错**：请确认已安装 ffmpeg 5.x+ 且路径无中文或空格；字幕路径中若包含特殊字符已自动转义。
+
+
+## 语音识别
+普通对话可以正常识别，但是哦吼哦吼的叫声基本不能识别，不过这种声音大多数也不用翻译也能明白。
