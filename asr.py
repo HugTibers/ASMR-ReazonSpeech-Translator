@@ -7,7 +7,12 @@ import os
 from pathlib import Path
 from typing import Iterable, Tuple
 
-from reazonspeech.espnet.asr import audio_from_path, load_model, transcribe
+import torch
+from espnet2.bin.asr_inference import Speech2Text
+from reazonspeech.espnet.asr import audio_from_path, transcribe
+
+DEFAULT_MODEL_SOURCE = "https://huggingface.co/reazon-research/reazonspeech-espnet-v2"
+MODEL_SOURCE_ENV = "REAZONSPEECH_MODEL_SOURCE"
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,11 +29,32 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="结果保存路径，不指定则与音频同名 (_reazon.txt)",
     )
+    parser.add_argument(
+        "--model-source",
+        default=None,
+        help=(
+            "ReazonSpeech 模型来源，可为本地目录、压缩包或 HuggingFace URL；"
+            f"默认使用 {DEFAULT_MODEL_SOURCE}，也可通过环境变量 {MODEL_SOURCE_ENV} 覆盖。"
+        ),
+    )
     return parser.parse_args()
 
 
-def run_asr(audio_file: Path, device: str) -> Iterable[Tuple[float, float, str]]:
-    model = load_model(device)
+def resolve_model_source(explicit: str | None) -> str:
+    return explicit or os.getenv(MODEL_SOURCE_ENV) or DEFAULT_MODEL_SOURCE
+
+
+def load_reazonspeech_model(device: str, source: str | None) -> Speech2Text:
+    final_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    model_source = resolve_model_source(source)
+    print(f"[ASR] 正在从 {model_source} 加载 ReazonSpeech 模型（设备：{final_device}）")
+    return Speech2Text.from_pretrained(model_source, lm_weight=0, device=final_device)
+
+
+def run_asr(
+    audio_file: Path, device: str, model_source: str | None
+) -> Iterable[Tuple[float, float, str]]:
+    model = load_reazonspeech_model(device, model_source)
     audio = audio_from_path(str(audio_file))
     result = transcribe(model, audio)
     for segment in result.segments:
@@ -59,7 +85,7 @@ def main() -> None:
         else Path(os.path.splitext(str(audio_path))[0] + "_reazon.txt")
     )
 
-    segments = list(run_asr(audio_path, args.device))
+    segments = list(run_asr(audio_path, args.device, args.model_source))
     save_segments(segments, output_path)
     print(f"分段结果已保存到: {output_path}")
 
