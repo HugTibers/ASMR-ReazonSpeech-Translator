@@ -5,6 +5,7 @@
 > **环境建议**
 > - 推荐在 Linux / WSL2 中使用，按照下文命令即可直接 `pip install "ReazonSpeech/pkg/espnet-asr"`。
 > - 如果必须在原生 Windows 下运行，需要先安装 Visual Studio Build Tools（Desktop development with C++）、CMake、Ninja 等 C++ 工具链，否则 `sentencepiece==0.2.0` 无法编译。
+> - Python 版本建议 3.10 / 3.11（64 位）。3.12/3.13 在 Windows 上部分依赖缺少预编译轮子，会触发本地编译错误（详见 [Windows 专项说明](#windows-专项说明)）。
 ## 效果图
 - 日语识别
 ![alt text](test/日语识别.png)
@@ -29,6 +30,7 @@
 
 ## 环境准备
 
+### 通用
 ```bash
 # 1. 下载项目
 git clone https://github.com/HugTibers/ASMR-ReazonSpeech-Translator.git
@@ -46,6 +48,20 @@ ffmpeg -version
 Ubuntu: sudo yum install ffmpeg
 Windows: 访问 ffmpeg官网 或 Gyan.dev下载页，下载 Windows 版本压缩包。
 ```
+
+### Windows 专项说明
+- 推荐 Python：64 位 3.10 或 3.11（3.12/3.13 缺轮子，易编译失败）。
+- 必装工具链：VS 2022 Build Tools（勾选“使用 C++ 的桌面开发”，含 MSVC + Windows SDK），系统 CMake，建议再装 Ninja。
+- 新建干净 venv，且在同一 venv 里执行以下顺序（建议在 “x64 Native Tools Command Prompt for VS 2022” 中执行，或新开终端确保 PATH 已刷新）：
+  ```powershell
+  python -m pip install --upgrade pip setuptools wheel
+  python -m pip install "cmake<3.28" ninja
+  cmake --version   # 可选，确认版本
+  cl                # 可选，确认 MSVC 可用
+  python -m pip install --no-build-isolation sentencepiece==0.2.0
+  python -m pip install "ReazonSpeech/pkg/espnet-asr"
+  ```
+- 若仍需编译，确保在新终端能跑通 `cmake --version` 与 `cl`，路径不要有中文或空格。
 
 > **提示**：DeepSeek 相关接口与 OpenAI SDK 兼容，脚本默认通过 `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` 注入密钥，你也可以在命令中使用 `--api-key` 直接传入。
 
@@ -148,6 +164,12 @@ python batch_pipeline.py "test" --pipeline-args --api-key sk-qweqweqwe123123131 
 1. **无法下载模型**：请确保服务器能够访问 Hugging Face（必要时配置代理或镜像），脚本会在运行时自动拉取官方模型。
 2. **无 GPU 环境**：所有脚本都可通过 `--device cpu` 运行，只是速度会慢。
 3. **ffmpeg 报错**：请确认已安装 ffmpeg 5.x+ 且路径无中文或空格；字幕路径中若包含特殊字符已自动转义。
+4. **Windows 依赖编译失败（sentencepiece / editdistance 等）**：
+   - 优先使用 64 位 Python 3.10 或 3.11，并新建干净 venv（3.12/3.13 常缺轮子，易编译失败）。
+   - 安装工具链：VS 2022 Build Tools（工作负载选“使用 C++ 的桌面开发”，包含 MSVC + Windows SDK），再在 venv 中 `pip install "cmake<3.28" ninja`。
+   - 确认环境：新开终端运行 `cmake --version`、`cl` 均能输出版本。
+   - 安装顺序示例（同一 venv）：`python -m pip install --upgrade pip setuptools wheel` → `python -m pip install "cmake<3.28" ninja` → `python -m pip install "ReazonSpeech/pkg/espnet-asr"`。
+   - 如果仍需源码编译，建议在 “x64 Native Tools Command Prompt for VS 2022” 中执行上述命令。
 
 
 ## 语音识别
