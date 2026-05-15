@@ -40,6 +40,11 @@ def parse_args() -> argparse.Namespace:
         help="自定义系统提示词",
     )
     parser.add_argument(
+        "--model",
+        default="deepseek-v4-flash",
+        help="DeepSeek 模型名 (默认 deepseek-v4-flash，可选 deepseek-v4-pro)",
+    )
+    parser.add_argument(
         "--max-chars",
         type=int,
         default=4000,
@@ -78,11 +83,11 @@ def split_into_chunks(text: str, max_chars: int) -> List[str]:
 
 
 def translate_chunk(
-    client: OpenAI, prompt: str, chunk_text: str, idx: int, total: int
+    client: OpenAI, prompt: str, chunk_text: str, idx: int, total: int, model: str
 ) -> str:
     print(f"正在翻译第 {idx}/{total} 段，长度 {len(chunk_text)} 字符...")
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model=model,
         messages=[
             {"role": "system", "content": prompt},
             {
@@ -109,13 +114,14 @@ def translate_file(
     input_text: str,
     prompt: str,
     max_chars: int,
+    model: str,
 ) -> List[str]:
     chunks = split_into_chunks(input_text, max_chars)
     total = len(chunks)
     if total == 0:
         raise ValueError("未在源文件中读取到内容。")
     return [
-        translate_chunk(client, prompt, chunk, idx, total)
+        translate_chunk(client, prompt, chunk, idx, total, model)
         for idx, chunk in enumerate(chunks, 1)
     ]
 
@@ -134,7 +140,7 @@ def main() -> None:
 
     client = ensure_client(args.api_key, args.base_url)
     input_text = input_path.read_text(encoding="utf-8")
-    translations = translate_file(client, input_text, args.prompt, args.max_chars)
+    translations = translate_file(client, input_text, args.prompt, args.max_chars, args.model)
     content = "\n".join(translations)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

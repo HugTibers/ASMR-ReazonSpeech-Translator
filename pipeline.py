@@ -64,6 +64,11 @@ def parse_args() -> argparse.Namespace:
         help="翻译时单次请求允许的最大字符数",
     )
     parser.add_argument(
+        "--model",
+        default="deepseek-v4-flash",
+        help="DeepSeek 模型名 (默认 deepseek-v4-flash，可选 deepseek-v4-pro)",
+    )
+    parser.add_argument(
         "--bg-color",
         default="black",
         help="ffmpeg 生成视频时的背景颜色",
@@ -164,7 +169,7 @@ def ensure_openai_client(api_key: str | None, base_url: str | None) -> OpenAI:
 
 
 def translate_text(
-    client: OpenAI, prompt: str, text: str, max_chars: int
+    client: OpenAI, prompt: str, text: str, max_chars: int, model: str
 ) -> str:
     chunks = split_chunks(text, max_chars)
     total = len(chunks)
@@ -172,7 +177,7 @@ def translate_text(
     for idx, chunk in enumerate(chunks, 1):
         print(f"[DeepSeek] 正在翻译段落 {idx}/{total}，长度 {len(chunk)}")
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model=model,
             messages=[
                 {"role": "system", "content": prompt},
                 {
@@ -361,7 +366,7 @@ def main() -> None:
                     client = ensure_openai_client(args.api_key, args.base_url)
                 with txt_path.open("r", encoding="utf-8") as fin:
                     source_text = fin.read()
-                translation = translate_text(client, prompt, source_text, args.max_chars)
+                translation = translate_text(client, prompt, source_text, args.max_chars, args.model)
                 trans_path.parent.mkdir(parents=True, exist_ok=True)
                 trans_path.write_text(translation, encoding="utf-8")
                 print(f"[DeepSeek] 翻译完成：{trans_path}")
