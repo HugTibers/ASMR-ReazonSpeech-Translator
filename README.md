@@ -65,6 +65,8 @@ Windows: 访问 ffmpeg官网 或 Gyan.dev下载页，下载 Windows 版本压缩
 
 > **提示**：DeepSeek 相关接口与 OpenAI SDK 兼容，脚本默认通过 `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` 注入密钥，你也可以在命令中使用 `--api-key` 直接传入。
 
+> **DeepSeek V4 迁移**：自 2026-04-24 起，DeepSeek 推出 V4 系列，默认模型已切换为 `deepseek-v4-flash`，可通过 `--model deepseek-v4-pro` 启用更强推理。旧别名 `deepseek-chat` / `deepseek-reasoner` 将在 **2026-07-24 15:59 UTC** 后停用。base_url 无需更改。
+
 ---
 
 ## 单次 ASR：`asr.py`
@@ -123,6 +125,7 @@ python pipeline.py test/Track1.wav \
 | `--api-key` / `--base-url` | DeepSeek/OpenAI 兼容接口配置 |
 | `--prompt` / `--prompt-file` | 覆盖默认翻译提示词，`--prompt-file` 优先级更高 |
 | `--max-chars` | 单次翻译请求的最大字符数 (默认 4000) |
+| `--model` | DeepSeek 模型名，默认 `deepseek-v4-flash`，可选 `deepseek-v4-pro` |
 | `--bg-color` / `--resolution` | ffmpeg 生成字幕视频的背景色和分辨率 |
 | `--no-resume` | 关闭断点续跑，强制从头执行 |
 
